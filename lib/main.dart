@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_test_app/counter.dart';
+import 'package:http/http.dart';
+
+import 'user_model.dart';
+import 'user_repository.dart';
 
 void main() {
   runApp(const MyApp());
@@ -31,14 +34,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final Counter counter = Counter();
-
-  void _incrementCounter() {
-    setState(() {
-      counter.incrementCounter();
-    });
-  }
-
+  Future<User> getUsers = UserRepository(Client()).getUser();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -46,24 +42,31 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '${counter.count}',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+      body: FutureBuilder<User>(
+        future: getUsers,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            final user = snapshot.data!;
+            return Center(
+              child: Text(
+                '${user.name}',
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+            );
+          } else if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          } else if (snapshot.hasError) {
+            return Center(
+              child: Text('Error: ${snapshot.error}'),
+            );
+          } else {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+        },
       ),
     );
   }
